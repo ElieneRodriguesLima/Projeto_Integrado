@@ -1,0 +1,15 @@
+from pydantic import BaseModel
+from typing import Optional
+
+
+class Legenda(BaseModel):
+    id: Optional[int] = None
+    nome: str
+    detalhes: str
+    pais: str
+    disponivel: bool = False
+    genero: str
+    ano: int
+
+    class Config():
+        orm_mode = True
