@@ -1,0 +1,54 @@
+from sqlalchemy import update, delete, select
+from sqlalchemy.orm import Session
+from src.schemas import schemas
+from src.infra.sqlalchemy.models import models
+
+class RepositorioLegenda():
+
+    def __init__(self, db: Session):
+        self.db = db
+
+
+    def criar_legenda(self, legendas: schemas.Legenda):
+        db_legendas = models.Legenda(nome=legendas.nome,
+                                     detalhes=legendas.detalhes,
+                                     pais=legendas.pais,
+                                     disponivel=legendas.disponivel,
+                                     genero=legendas.genero,
+                                     ano=legendas.ano)
+        self.db.add(db_legendas)
+        self.db.commit()
+        self.db.refresh(db_legendas)
+        return db_legendas
+
+    def listar_legenda(self):
+        legendas = self.db.query(models.Legenda).all()
+        return legendas
+    
+    def listar_legenda_por_genero(self, genero: str):
+        consultar_legenda = select(models.Legenda).where(models.Legenda.genero == genero)
+        legenda = self.db.execute(consultar_legenda).scalars().all()
+        return legenda
+
+    def atualizar_legenda(self, legenda_id: int, legendas: schemas.Legenda):
+        atualizar_legenda = update(models.Legenda).where(models.Legenda.id == legenda_id).values(nome=legendas.nome,
+                                                                                                detalhes=legendas.detalhes,
+                                                                                                pais=legendas.pais,
+                                                                                                disponivel=legendas.disponivel,
+                                                                                                genero=legendas.genero,
+                                                                                                ano=legendas.ano)
+        self.db.execute(atualizar_legenda)
+        self.db.commit()                                      
+
+
+
+    def remover_legenda(self, id: int):
+        remover_legenda = self.db.query(models.Legenda)
+        if remover_legenda  := remover_legenda.filter(
+            models.Legenda.id == id
+        ).first():
+            self.db.delete(remover_legenda)
+            self.db.commit()
+            return {'Mensagem': f'Legenda {remover_legenda.nome} removida com sucesso!.'}
+        return {'Mensagem': f'Legenda {id} não encontrada!.'}
+        
