@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, Depends, status, HTTPException
 from typing import List
 from sqlalchemy.orm import Session
 from src.schemas.schemas import Legenda
-from src.infra.sqlalchemy.config.database import get_db, criar_bd
+from src.infra.sqlalchemy.config.database import  get_db
 from src.infra.sqlalchemy.repositorios.repositorio_legenda import RepositorioLegenda
 
 #criar_bd()
@@ -12,12 +12,34 @@ subtitle = FastAPI()
 
 @subtitle.post('/legendas', status_code=status.HTTP_201_CREATED, response_model=Legenda)
 def criar_legendas(legenda: Legenda, db: Session = Depends(get_db)):
-    legenda_criada = RepositorioLegenda(db).criar(legenda)
-    return legenda_criada
+    legendas_criada = RepositorioLegenda(db).criar(legenda)
+    return legendas_criada
 
 
-@subtitle.get('/legendas', status_code=status.HTTP_200_OK, response_model=List[Legenda])
+@subtitle.get('/legendas', status_code=status.HTTP_200_OK, response_model=list[Legenda])
 def listar_legendas(db: Session = Depends(get_db)):
-    legendas = RepositorioLegenda(db).listar()
+    legendas = RepositorioLegenda(db).listar_legenda()
     return legendas
 
+#Lista as legendas pelo gênero informado.
+@subtitle.get('/legendas/{genero}')
+def listar_legenda_genero(genero: str, session: Session = Depends(get_db)):
+    consultar_legendas_genero = RepositorioLegenda(session).listar_legenda_por_genero(genero) 
+    return consultar_legendas_genero
+
+
+#Atualiza os dados da legenda pelo ID informado.
+@subtitle.put('/legendas/{legendas_id}')
+def buscar_legendas(legendas_id: int, legenda: Legenda, session: Session = Depends(get_db)):
+    RepositorioLegenda(session).atualizar_legenda(legendas_id, legenda)
+    legenda.id = legendas_id
+    return legenda
+
+
+#Remove a legenda pelo ID informado.
+@subtitle.delete('/legendas/{legenda_id}')
+def remover_legendas(legenda_id: int, session: Session = Depends(get_db)):
+    remover = RepositorioLegenda(session).remover_legenda(legenda_id)
+    if not remover:
+        raise HTTPException(status_code=404, detail=f'Legenda por {legenda_id} não localizado!.')
+    return remover
